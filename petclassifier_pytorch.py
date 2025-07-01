@@ -42,33 +42,6 @@ def split_data(base_dir, output_dir, train_split=0.8, val_split=0.1, seed=42):
 
         print("Dataset split completed.")
 
-
-split_data('dataset/original', 'dataset/tmp')
-
-learning_rate = 1e-3
-batch_size = 256
-epochs = 30
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-])
-
-train_path = "dataset/tmp/train_data"
-val_path = "dataset/tmp/val_data"
-test_path = "dataset/tmp/test_data"
-
-train_dataset = ImageFolder(root=train_path, transform=transform)
-val_dataset = ImageFolder(root=val_path, transform=transform)
-test_dataset = ImageFolder(root=test_path, transform=transform)
-
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=6, pin_memory=True, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
-test_dataloader = DataLoader(test_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
-
-
 class NeuralNetwork(nn.Module):
     def __init__(self):
         super().__init__()
@@ -178,17 +151,46 @@ class EarlyStopping:
             self.counter = 0
 
 
-model = NeuralNetwork().to(device)
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-# model.load_state_dict(torch.load('model_weights.pth', weights_only=True))
+def main():
+    split_data('dataset/original', 'dataset/tmp')
 
-early_stopping = EarlyStopping(patience=3, min_delta=0.01)
-for i in range(epochs):
-    print(f'Epoch {i}:')
-    train_loop(model, train_dataloader, loss_fn, optimizer)
-    val_loop(model, val_dataloader, loss_fn, early_stopping)
-test_loop(model, test_dataloader, loss_fn)
+    learning_rate = 1e-3
+    batch_size = 256
+    epochs = 30
 
-torch.save(model.state_dict(), f'model_weights.pth')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+    ])
+
+    train_path = "dataset/tmp/train_data"
+    val_path = "dataset/tmp/val_data"
+    test_path = "dataset/tmp/test_data"
+
+    train_dataset = ImageFolder(root=train_path, transform=transform)
+    val_dataset = ImageFolder(root=val_path, transform=transform)
+    test_dataset = ImageFolder(root=test_path, transform=transform)
+
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=6, pin_memory=True, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
+    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
+
+    model = NeuralNetwork().to(device)
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    # model.load_state_dict(torch.load('model_weights.pth', weights_only=True))
+
+    early_stopping = EarlyStopping(patience=3, min_delta=0.01)
+    for i in range(epochs):
+        print(f'Epoch {i}:')
+        train_loop(model, train_dataloader, loss_fn, optimizer)
+        val_loop(model, val_dataloader, loss_fn, early_stopping)
+    test_loop(model, test_dataloader, loss_fn)
+
+    torch.save(model.state_dict(), f'model_weights.pth')
+
+
+if __name__ == '__main__':
+    main()
