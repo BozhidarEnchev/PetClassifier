@@ -10,6 +10,16 @@ from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
 
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+learning_rate = 1e-3
+batch_size = 256
+epochs = 30
+
+train_path = "dataset/tmp/train_data"
+val_path = "dataset/tmp/val_data"
+test_path = "dataset/tmp/test_data"
+
+
 def split_data(base_dir, output_dir, train_split=0.8, val_split=0.1, seed=42):
     random.seed(seed)
     classes = [d for d in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, d))]
@@ -41,6 +51,7 @@ def split_data(base_dir, output_dir, train_split=0.8, val_split=0.1, seed=42):
                     shutil.copy(file, dest_dir)
 
         print("Dataset split completed.")
+
 
 class NeuralNetwork(nn.Module):
     def __init__(self):
@@ -152,22 +163,13 @@ class EarlyStopping:
 
 
 def main():
-    split_data('dataset/original', 'dataset/tmp')
-
-    learning_rate = 1e-3
-    batch_size = 256
-    epochs = 30
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if not os.path.exists('dataset/tmp'):
+        split_data('dataset/original', 'dataset/tmp')
 
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
     ])
-
-    train_path = "dataset/tmp/train_data"
-    val_path = "dataset/tmp/val_data"
-    test_path = "dataset/tmp/test_data"
 
     train_dataset = ImageFolder(root=train_path, transform=transform)
     val_dataset = ImageFolder(root=val_path, transform=transform)
