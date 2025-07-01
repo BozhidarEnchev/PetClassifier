@@ -126,4 +126,4 @@ r = model.fit(
         epochs=10,
         validation_data=validation_generator)
 model.evaluate(test_generator)
-model.save('pet-classifier.h5')
+model.save('pet-classifier.keras')

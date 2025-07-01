@@ -19,6 +19,19 @@ train_path = "dataset/tmp/train_data"
 val_path = "dataset/tmp/val_data"
 test_path = "dataset/tmp/test_data"
 
+transform = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+])
+
+train_dataset = ImageFolder(root=train_path, transform=transform)
+val_dataset = ImageFolder(root=val_path, transform=transform)
+test_dataset = ImageFolder(root=test_path, transform=transform)
+
+train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=6, pin_memory=True, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
+test_dataloader = DataLoader(test_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
+
 
 def split_data(base_dir, output_dir, train_split=0.8, val_split=0.1, seed=42):
     random.seed(seed)
@@ -166,23 +179,9 @@ def main():
     if not os.path.exists('dataset/tmp'):
         split_data('dataset/original', 'dataset/tmp')
 
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-    ])
-
-    train_dataset = ImageFolder(root=train_path, transform=transform)
-    val_dataset = ImageFolder(root=val_path, transform=transform)
-    test_dataset = ImageFolder(root=test_path, transform=transform)
-
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=6, pin_memory=True, shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
-    test_dataloader = DataLoader(test_dataset, batch_size=batch_size, pin_memory=True, num_workers=6)
-
     model = NeuralNetwork().to(device)
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # model.load_state_dict(torch.load('model_weights.pth', weights_only=True))
 
     early_stopping = EarlyStopping(patience=3, min_delta=0.01)
     for i in range(epochs):
